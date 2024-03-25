@@ -2,6 +2,7 @@ from data import Dataset
 from keras import models, layers, losses, metrics
 from matplotlib import pyplot as plt
 import pandas as pd
+from numpy import expand_dims
 
 class ToxicModel(Dataset):
     def __init__(self, from_file=None) -> None:
@@ -16,7 +17,6 @@ class ToxicModel(Dataset):
             self.get_stats()
         else:
             self.create_model()
-            
 
     def create_model(self):
         self.model = models.Sequential()
@@ -68,8 +68,25 @@ class ToxicModel(Dataset):
         
         print(f'Precision: {self.precision.result().numpy()}, Recall:{self.recall.result().numpy()}, Accuracy:{self.accuracy.result().numpy()}')
 
-    def batch_predict(self, batch):
-        pass
-
     def save_model(self, name):
         self.model.save(name + '.keras')
+    
+    def score(self, text:str):
+        # For input text, we can give see where its toxic
+        vec = expand_dims(self.tokenizer(text), 0)
+        result = self.model.predict(vec)
+
+        outputs = {"pretty":[], "really":[], "score": 0.0}
+        for idx, cat in enumerate(self.flags):
+            if  1 >= result[0][idx] >= 0.8:
+                outputs["really"].append(cat)
+                outputs["score"] += 1/3
+            elif 0.8 > result[0][idx] >= 0.5:
+                outputs["pretty"].append(cat)
+                outputs["score"] += 1/6
+        
+        return outputs
+        
+
+
+

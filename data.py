@@ -25,11 +25,11 @@ class Dataset:
         self.tokenizer.adapt(self.raw["comment_text"].values)
 
     def prepare(self, shuffle_seed=160000, num_batches=16, prefetch_seed=8, split=[0.7, 0.2, 0.1]):
-        flags = self.raw[self.raw.columns[2:]].values
+        self.flags = self.raw[self.raw.columns[2:]].values
         comments = self.raw["comment_text"].values
 
         # generate the TF dataset, and prepare the batches
-        dataset = tf.data.Dataset.from_tensor_slices((self.tokenizer(comments), flags))
+        dataset = tf.data.Dataset.from_tensor_slices((self.tokenizer(comments), self.flags))
         dataset = dataset.cache()
         dataset = dataset.shuffle(shuffle_seed)
         dataset = dataset.batch(num_batches)
