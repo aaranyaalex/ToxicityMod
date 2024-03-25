@@ -5,7 +5,7 @@ Data preprocessing functions for Kaggle Dataset
 import os
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import TextVectorization
+from keras import layers
 import pandas as pd
 
 class Dataset:
@@ -14,12 +14,13 @@ class Dataset:
         # store the data from dataset path
         self.fp = os.path.join('jigsaw-toxic-comment-classification-challenge','train.csv', 'train.csv')
         self.raw = pd.read_csv(self.fp)
+        self.max_features = max_features
 
         # generate the tokenizer (Text to Vec)
         self.tokenize(max_features, max_text_length)
 
     def tokenize(self, n_features, n_length):
-        self.tokenizer = TextVectorization(max_tokens=n_features, output_sequence_length=n_length, output_mode='int')
+        self.tokenizer = layers.TextVectorization(max_tokens=n_features, output_sequence_length=n_length, output_mode='int')
         # add vocabulary to the tokenizer
         self.tokenizer.adapt(self.raw["comment_text"].values)
 
