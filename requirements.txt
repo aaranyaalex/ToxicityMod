@@ -3,3 +3,5 @@ numpy
 tensorflow
 matplotlib
 scikit-learn
+streamlit
+streamlit-chat

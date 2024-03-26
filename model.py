@@ -1,5 +1,7 @@
 from data import Dataset
-from keras import models, layers, losses, metrics
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Embedding
+from tensorflow.keras.metrics import Precision, Recall, CategoricalAccuracy
 from matplotlib import pyplot as plt
 import pandas as pd
 from numpy import expand_dims
@@ -12,25 +14,25 @@ class ToxicModel(Dataset):
         self.prepare()
 
         if from_file:
-            self.model = models.load_model(from_file)
+            self.model = load_model(from_file)
             self.model_history = None
-            self.get_stats()
+            #self.get_stats()
         else:
             self.create_model()
 
     def create_model(self):
-        self.model = models.Sequential()
+        self.model = Sequential()
         # Create the embedding layer 
-        self.model.add(layers.Embedding(self.max_features+1, 32))
+        self.model.add(Embedding(self.max_features+1, 32))
         # Bidirectional LSTM Layer
-        self.model.add(layers.Bidirectional(layers.LSTM(32, activation='tanh')))
+        self.model.add(Bidirectional(LSTM(32, activation='tanh')))
         # Feature extractor Fully connected layers
-        self.model.add(layers.Dense(128, activation='relu'))
-        self.model.add(layers.Dense(256, activation='relu'))
-        self.model.add(layers.Dense(128, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dense(128, activation='relu'))
         # Final layer needs to have length 6 to correspond with the 6 toxicity flags
-        self.model.add(layers.Dense(6, activation='sigmoid'))
-        self.model.compile(loss=losses.binary_crossentropy, optimizer="Adam")
+        self.model.add(Dense(6, activation='sigmoid'))
+        self.model.compile(loss='BinaryCrossentropy', optimizer="Adam")
 
         print("Built model skeleton!")
 
@@ -47,9 +49,9 @@ class ToxicModel(Dataset):
         self.get_stats()
     
     def get_stats(self):
-        self.precision = metrics.Precision()
-        self.recall = metrics.Recall()
-        self.accuracy = metrics.CategoricalAccuracy()
+        self.precision = Precision()
+        self.recall = Recall()
+        self.accuracy = CategoricalAccuracy()
 
         print("Testing the model...")
         for batch in self.test.as_numpy_iterator(): 
@@ -69,7 +71,7 @@ class ToxicModel(Dataset):
         print(f'Precision: {self.precision.result().numpy()}, Recall:{self.recall.result().numpy()}, Accuracy:{self.accuracy.result().numpy()}')
 
     def save_model(self, name):
-        self.model.save(name + '.keras')
+        self.model.save(name + '.h5')
     
     def score(self, text:str):
         # For input text, we can give see where its toxic
@@ -88,5 +90,28 @@ class ToxicModel(Dataset):
         return outputs
         
 
+if __name__ == "__main__":
+    # This is the main model I'll use
+    botModel = ToxicModel()
+    botModel.train_model(epochs=1, plot_history=True)
+    botModel.model.save("AaranyasBotModel.h5")
+
+    text = botModel.tokenizer("You freaking suck! I am going to hit you.")
+    result = botModel.model.predict(expand_dims(text,0))
+    print(result)
+    
+    # For 10 epochs         For 1 Epoch
+    # Precision: 96%            83%
+    # Accuracy: 51%             46%
+    # Recall: 95%               67%
+    # These values are good - the data is quite skewed so accuracy can be low, but we want to definitely flag the toxic messages
+    # High Precision and recall demonstrates that model can identify toxic messages well
+
+    #del botModel
+
+    #botModel = ToxicModel(from_file="toxicity.h5")
+    #botModel.score("You're so ugly and you smell so bad")
+
+    #
 
 
