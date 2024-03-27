@@ -4,7 +4,6 @@ import pandas as pd
 import random
 from streamlit_chat import message
 from tensorflow.keras.models import load_model
-import tensorflow as tf
 from numpy import expand_dims
 
 st.set_page_config(page_title="User Mode", page_icon="🥊")
