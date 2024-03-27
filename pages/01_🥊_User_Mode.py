@@ -3,12 +3,19 @@ import streamlit as st
 import pandas as pd
 import random
 from streamlit_chat import message
-from model import ToxicModel
+from tensorflow.keras.models import load_model
+import tensorflow as tf
+from numpy import expand_dims
 
 st.set_page_config(page_title="User Mode", page_icon="🥊")
 st.title("Welcome to 'Some Discord Server'!")
 st.header("#rageroom")
 st.text("Rage to your heart's content. \nThe moderator will step in if it starts crossing the line.")
+response_container = st.container()
+container = st.container()
+model = load_model("AaranyasBotModel.h5")
+tokenizer = load_model("vectorizer.tf")
+tokenizer = tokenizer.layers[0]
 
 # Initialise session state variables
 if 'generated' not in st.session_state:
@@ -17,8 +24,6 @@ if 'past' not in st.session_state:
     st.session_state['past'] = []
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
-if "toxicity_model" not in st.session_state:
-    st.session_state["toxicity_model"] = ToxicModel(from_file="AaranyasBotModel.h5")
 if "tracker" not in st.session_state:
     st.session_state["tracker"] = pd.read_csv('demohistory.csv')
 if "user" not in st.session_state:
@@ -28,13 +33,28 @@ if "user" not in st.session_state:
 if "kicked" not in st.session_state:
     st.session_state["kicked"] = False
 
-response_container = st.container()
-container = st.container()
+
+
+def score_func(text:str):
+    # For input text, we can give see where its toxic
+    vec = expand_dims(tokenizer(text), 0)
+    result = model.predict(vec)
+
+    outputs = {"pretty":[], "really":[], "score": 0.0}
+    for idx, cat in enumerate(st.session_state["tracker"].columns[2:-1].values):
+        if  1 >= result[0][idx] >= 0.8:
+            outputs["really"].append(cat)
+            outputs["score"] += 1/3
+        elif 0.8 > result[0][idx] >= 0.5:
+            outputs["pretty"].append(cat)
+            outputs["score"] += 1/6
+    
+    return (result > 0.5).astype(int), outputs
 
 def response_generator(prompt):
     """ Edit to include the model outputs"""
 
-    raw, score = st.session_state["toxicity_model"].score(prompt)
+    raw, score = score_func(prompt)
     st.session_state['messages'].append({"role": "user", "content": prompt})
     #st.session_state['messages'].append({"role": "assistant", "content": response})
 

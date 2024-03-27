@@ -1,10 +1,13 @@
 from data import Dataset
+from tensorflow import string
+from tensorflow.keras import Input
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Embedding
 from tensorflow.keras.metrics import Precision, Recall, CategoricalAccuracy
 from matplotlib import pyplot as plt
 import pandas as pd
 from numpy import expand_dims
+import pickle
 
 class ToxicModel(Dataset):
     def __init__(self, from_file=None) -> None:
@@ -73,32 +76,25 @@ class ToxicModel(Dataset):
     def save_model(self, name):
         self.model.save(name + '.h5')
     
-    def score(self, text:str):
-        # For input text, we can give see where its toxic
-        vec = expand_dims(self.tokenizer(text), 0)
-        result = self.model.predict(vec)
+    def save_tokenizer(self):
+        model = Sequential()
+        model.add(Input(shape=(1,), dtype=string))
+        model.add(self.tokenizer)
 
-        outputs = {"pretty":[], "really":[], "score": 0.0}
-        for idx, cat in enumerate(self.flags):
-            if  1 >= result[0][idx] >= 0.8:
-                outputs["really"].append(cat)
-                outputs["score"] += 1/3
-            elif 0.8 > result[0][idx] >= 0.5:
-                outputs["pretty"].append(cat)
-                outputs["score"] += 1/6
-        
-        return (result > 0.5).astype(int), outputs
+        # Save.
+        filepath = "vectorizer"
+        model.save(filepath, save_format="h5")
         
 
 if __name__ == "__main__":
     # This is the main model I'll use
-    botModel = ToxicModel()
-    botModel.train_model(epochs=1, plot_history=True)
-    botModel.model.save("AaranyasBotModel.h5")
+    #botModel = ToxicModel()
+    #botModel.train_model(epochs=1, plot_history=True)
+    #botModel.model.save("AaranyasBotModel.h5")
 
-    text = botModel.tokenizer("You freaking suck! I am going to hit you.")
-    result = botModel.model.predict(expand_dims(text,0))
-    print(result)
+    #text = botModel.tokenizer("You freaking suck! I am going to hit you.")
+    #result = botModel.model.predict(expand_dims(text,0))
+    #print(result)
     
     # For 10 epochs         For 1 Epoch
     # Precision: 96%            83%
@@ -109,7 +105,10 @@ if __name__ == "__main__":
 
     #del botModel
 
-    #botModel = ToxicModel(from_file="toxicity.h5")
+    botModel = ToxicModel(from_file="AaranyasBotModel.h5")
+            # Load.
+    loaded_model = load_model("vectorizer.h5")
+    loaded_vectorizer = loaded_model.layers[0]
     #botModel.score("You're so ugly and you smell so bad")
 
     #
