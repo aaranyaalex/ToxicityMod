@@ -87,7 +87,7 @@ class ToxicModel(Dataset):
                 outputs["pretty"].append(cat)
                 outputs["score"] += 1/6
         
-        return outputs
+        return (result > 0.5).astype(int), outputs
         
 
 if __name__ == "__main__":
