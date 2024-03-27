@@ -76,7 +76,7 @@ with container:
                 [
                     "Preach!",
                     "Kinda vanilla.",
-                    "Ehh, my mom has said worse."
+                    "Ehh, my mom has said worse.",
                     "Maybe you could seek professional help?",
                     "C'mon now - no one can actually hear you here!",
                 ]
