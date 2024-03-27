@@ -7,6 +7,12 @@ container  = st.container()
 
 if "tracker" not in st.session_state:
     st.session_state["tracker"] = pd.read_csv('demohistory.csv')
+if "user" not in st.session_state:
+    num = len(st.session_state["tracker"])
+    st.session_state["user"] = "user_" + str(num +1)
+    st.session_state["tracker"].loc[num] = ["Good", st.session_state["user"], 0, 0, 0, 0, 0, 0, 0]
+if "kicked" not in st.session_state:
+    st.session_state["kicked"] = False
 
 with container:
     df = st.session_state["tracker"]
